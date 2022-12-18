@@ -1,0 +1,10 @@
+/.vscode
+/__pycache__
+/data.pickle
+/file2.xlsx
+/file_latest.xls
+/file_latest.xlsx
+/functions.py
+/mainwindow.ui
+/settings.ui
+/subjects

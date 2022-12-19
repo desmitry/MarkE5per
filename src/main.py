@@ -1,6 +1,6 @@
 from main_window import Ui_MainWindow
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from settings_window import Ui_Settings
 from entities import Subject, Mark
@@ -16,12 +16,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.selected_subject = None
 
     def connectSignalsSlots(self):
-        #self.action_Exit.triggered.connect(self.close)
-        #self.action_Find_Replace.triggered.connect(self.findAndReplace)
-        #self.action_About.triggered.connect(self.about)
         self.tabWidget.setCurrentIndex(0)
         self.settings.triggered.connect(self.show)
-        #self.applyButton.clicked.connect(self.update_data)
         self.listWidget.itemActivated.connect(self.setup_tweaking)
         self.fiveSpinBox.valueChanged['int'].connect(self.fiveSlider.setValue)
         self.fourSpinBox.valueChanged['int'].connect(self.fourSlider.setValue)
@@ -55,11 +51,16 @@ class Window(QMainWindow, Ui_MainWindow):
         QtWidgets.QMessageBox.about(
             self,
             'О приложении',
-            '''
-            С великим удовольствием
-            Приложение создавал @desmitry.
-            '''
+            'С великим удовольствием\nПриложение создавал @desmitry.'
         )
+
+    def update_rLabels(self, subject):
+        self.averageLabel.setText(f'Средний балл: {subject.average}')
+        remaining = subject.return_remaining()
+        if remaining[0]:
+            self.rFiveLabel.setText(f'Требуется: {remaining[0]}')
+        if remaining[1]:
+            self.rFourLabel.setText(f'Требуется: {remaining[1]}')
 
     def update_data(self):
         subject = copy.deepcopy(self.selected_subject)
@@ -79,12 +80,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.rFourLabel.clear()
         if subject.marks:
             subject.calculate_average()
-            self.averageLabel.setText(f'Средний балл: {subject.average}')
-            remaining = subject.return_remaining()
-            if remaining[0]:
-                self.rFiveLabel.setText(f'Требуется: {remaining[0]}')
-            if remaining[1]:
-                self.rFourLabel.setText(f'Требуется: {remaining[1]}')
+            self.update_rLabels(subject)
 
 
     def setup_tweaking(self, current_item):
@@ -109,28 +105,13 @@ class Window(QMainWindow, Ui_MainWindow):
             if subject.name == current_item.text():
                 self.selected_subject = subject
                 if subject.marks:
-                    subject.calculate_average()
-                    self.averageLabel.setText(
-                        f'Средний балл: {subject.average}'
-                    )
-                    if subject.average < subject.goal - 1 + Subject.THRESHOLD:
-                        remaining = subject.return_remaining()
-                        if remaining[0]:
-                            self.rFiveLabel.setText(f'Требуется: {remaining[0]}')
-                        if remaining[1]:
-                            self.rFourLabel.setText(f'Требуется: {remaining[1]}')
-                        setup_list_2_contents(2)
-                        setup_list_2_contents(3)
-                else:
+                    self.update_rLabels(subject)
+                    setup_list_2_contents(2)
+                    setup_list_2_contents(3)
+                if len(subject.marks) < 3:
                     QtWidgets.QListWidgetItem(self.listWidget_2).setText(
-                        'Оценок по предмету нет'
+                        f'Оценок до аттестации: {3 - len(subject.marks)}'
                     )
-
-                    #    # создай слайдер/спинбокс с координатами (x, y + z)
-                    #    # создай метку с количеством пятерок
-                    #    # if subject.goal == 4
-                    #        # создай слайдер/спинбокс с координатами (x, y + z)
-                    #            # создай метку с количеством четверок#
 
     def setup_list_1_contents(self):
         self.listWidget.clear()
@@ -148,7 +129,7 @@ class Settings_window(QtWidgets.QDialog, Ui_Settings):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.loadTweaks()
+        self.load_tweaks()
         self.connectSignalsSlots()
 
     def connectSignalsSlots(self):

@@ -1,8 +1,8 @@
-from listview import Ui_MainWindow
+from main_window import Ui_MainWindow
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from settings import Ui_Settings
+from settings_window import Ui_Settings
 from entities import Subject, Mark
 import copy
 

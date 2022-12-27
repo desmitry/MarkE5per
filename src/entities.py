@@ -1,22 +1,24 @@
+import os
 from dataclasses import dataclass
-from datetime import date
+import datetime
 import pickle
+
 @dataclass
 class Mark:
     value: int
-    date: date = None
-
+    date: datetime.date = datetime.date(1, 1, 1)
 
 @dataclass
 class Subject:
-    __slots__ = ['name', 'marks', 'average', 'goal']
+    __slots__ = ['name', 'marks', 'average', 'goal', 'to_add', 'to_remove']
     name: str
     marks: list
     average: float
     goal: int
-    THRESHOLD = 0.71
+    to_add: list
+    to_remove: list
+    threshold = 0.71
     subjects = []
-    marks_buffer = []
 
 
     def calculate_average(self):
@@ -26,27 +28,32 @@ class Subject:
                 2
             )
 
-
-    def save():
+    @classmethod
+    def save(cls):
         '''Save subjects in bytes.'''
         import pickle
-        with open('subjects', 'wb') as f:
-            pickle.dump(Subject.subjects, f)
+        with open(f'{os.path.dirname(os.path.realpath(__file__))}/subjects', 'wb') as f:
+            subjects = Subject.subjects.copy()
+            subjects.append(Subject.threshold)
+            pickle.dump(subjects, f)
 
 
-    def load():
+    @classmethod
+    def load(cls):
         '''Load subjects from bytes.'''
         import pickle
-        with open('subjects', 'rb') as f:
+        with open(f'{os.path.dirname(os.path.realpath(__file__))}/subjects', 'rb') as f:
             Subject.subjects = pickle.load(f)
+            Subject.threshold = Subject.subjects.pop()
 
 
-    def load_excel(file):
+    @classmethod
+    def load_excel(cls, file):
         '''Load subjects from xlsx file.'''
         from openpyxl import load_workbook
 
         def create_mark(cell, value):
-            month = None
+            month = 0
             for i in range(cell.column, 0, -1):
                 if sheet.cell(12, i).value:
                     month = MONTHS[sheet.cell(12, i).value]
@@ -54,8 +61,8 @@ class Subject:
             marks.append(
                 Mark(
                     value=value,
-                    date=date(
-                        date.today().year,
+                    date=datetime.date(
+                        datetime.date.today().year,
                         # на винде B11. надо переделать так, чтобы не ссылаться так на вручную определенные номера строк
                         month,
                         # на винде 12
@@ -88,10 +95,9 @@ class Subject:
                     for value in values:
                         if value.isdigit():
                             create_mark(mark, int(value))
-            subject = Subject(row[0].value, marks, None, 5)
+            subject = Subject(row[0].value, marks, 0, 5, [], [])
             subject.calculate_average()
             Subject.subjects.append(subject)
-            Subject.save()
 
 
     def return_remaining(self):
@@ -102,14 +108,14 @@ class Subject:
         average = self.average
         fives_to_go = 0
         fours_to_go = 0
-        while average < self.goal - 1 + Subject.THRESHOLD:
+        while average < self.goal - 1 + Subject.threshold:
             fives_to_go += 1
             marks_sum += 5
             amount += 1
             average = (marks_sum) / (amount)
         average = self.average
         if self.goal != 5:
-            while average < self.goal - 1 + Subject.THRESHOLD:
+            while average < self.goal - 1 + Subject.threshold:
                 fours_to_go += 1
                 average = (marks_sum + 4) / (amount + 1)
         return fives_to_go, fours_to_go
@@ -120,7 +126,7 @@ if __name__ == '__main__':
     if answer == 'n':    
         Subject.load()
     else:
-        Subject.load_excel('file2.xlsx')
+        Subject.load_excel('file.xlsx')
         Subject.save()
     while True:
         eval(input('>>>'))

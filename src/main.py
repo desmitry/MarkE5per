@@ -3,10 +3,9 @@ from settings_window import Ui_Settings
 import sys
 import os
 from PyQt5 import QtWidgets
-from entities import Subject, Mark
+from entities import PLATFORM, SLASH, Subject, Mark
 from copy import deepcopy
 import pickle
-
 
 class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     
@@ -49,9 +48,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     def load_file(self):
         '''Load marks from .xlsx and configuration from bytes.'''
         Subject.load_excel(
-            QtWidgets.QFileDialog.getOpenFileName(self, 'Открыть', '/home')[0])
+            QtWidgets.QFileDialog.getOpenFileName(self, 'Открыть', filter='Excel files (*.xlsx)')[0]
+        )
         try:
-            with open(f'{os.path.dirname(os.path.realpath(__file__))}/subjects', 'rb') as f:
+            with open(f'{os.path.dirname(os.path.realpath(__file__))}{SLASH}subjects', 'rb') as f:
                 subjects_conf = pickle.load(f)
                 subjects_conf.pop(-1)
                 for subject_conf in subjects_conf:

@@ -1,7 +1,14 @@
 import os
+from sys import platform
 from dataclasses import dataclass
 import datetime
 import pickle
+
+PLATFORM = platform
+if PLATFORM == 'win32':
+    SLASH = '\\'
+elif 'linux' in PLATFORM or PLATFORM == 'darwin':
+    SLASH = '/'
 
 @dataclass
 class Mark:
@@ -32,7 +39,7 @@ class Subject:
     def save(cls):
         '''Save subjects in bytes.'''
         import pickle
-        with open(f'{os.path.dirname(os.path.realpath(__file__))}/subjects', 'wb') as f:
+        with open(f'{os.path.dirname(os.path.realpath(__file__))}{SLASH}subjects', 'wb') as f:
             subjects = Subject.subjects.copy()
             subjects.append(Subject.threshold)
             pickle.dump(subjects, f)
@@ -42,7 +49,7 @@ class Subject:
     def load(cls):
         '''Load subjects from bytes.'''
         import pickle
-        with open(f'{os.path.dirname(os.path.realpath(__file__))}/subjects', 'rb') as f:
+        with open(f'{os.path.dirname(os.path.realpath(__file__))}{SLASH}subjects', 'rb') as f:
             Subject.subjects = pickle.load(f)
             Subject.threshold = Subject.subjects.pop()
 
@@ -50,23 +57,29 @@ class Subject:
     @classmethod
     def load_excel(cls, file):
         '''Load subjects from xlsx file.'''
+        if not file:
+            return
         from openpyxl import load_workbook
-
+        if PLATFORM == 'linux' or PLATFORM == 'darwin':
+            MONTH_ROW = 12
+        else:
+            MONTH_ROW = 11
+        DATE_ROW = MONTH_ROW + 1
         def create_mark(cell, value):
             month = 0
             for i in range(cell.column, 0, -1):
-                if sheet.cell(12, i).value:
-                    month = MONTHS[sheet.cell(12, i).value]
+                if sheet.cell(MONTH_ROW, i).value:
+                    month = MONTHS[sheet.cell(MONTH_ROW, i).value]
                     break
             marks.append(
                 Mark(
-                    value=value,
-                    date=datetime.date(
+                    value,
+                    datetime.date(
                         datetime.date.today().year,
                         # на винде B11. надо переделать так, чтобы не ссылаться так на вручную определенные номера строк
                         month,
                         # на винде 12
-                        sheet.cell(13, cell.column).value
+                        sheet.cell(DATE_ROW, cell.column).value
                     )
                 )
             )
@@ -81,20 +94,26 @@ class Subject:
         }
         sheet = load_workbook(filename=file).active
         Subject.subjects.clear()
-        for row in sheet.iter_rows(14, 33, 1):
+        STOP_ROW = DATE_ROW
+        while True:
+            STOP_ROW += 1
+            if not sheet.cell(STOP_ROW, 1).value:
+                STOP_ROW -= 1
+                break
+        for row in sheet.iter_rows(DATE_ROW + 1, STOP_ROW, 1):
             marks = []
-            for mark in row[1:]:
-                if sheet.cell(12, mark.column).value == 'Средняя оценка':
+            for cell in row[1:]:
+                if sheet.cell(MONTH_ROW, cell.column).value == 'Средняя оценка':
                     break
-                if not mark.value:
+                if not cell.value:
                     continue
-                elif isinstance(mark.value, int):
-                    create_mark(mark, mark.value)
-                elif len(mark.value) > 1:
-                    values = mark.value.split()
+                elif isinstance(cell.value, int):
+                    create_mark(cell, cell.value)
+                elif len(cell.value) > 1:
+                    values = cell.value.split()
                     for value in values:
                         if value.isdigit():
-                            create_mark(mark, int(value))
+                            create_mark(cell, int(value))
             subject = Subject(row[0].value, marks, 0, 5, [], [])
             subject.calculate_average()
             Subject.subjects.append(subject)

@@ -43,7 +43,7 @@ class Ui_MainWindow(object):
         self.threeLabel.setText('3')
         self.averageLabel = QtWidgets.QLabel(self.tab_1)
         self.averageLabel.setGeometry(QtCore.QRect(330, 250, 311, 81))
-        self.averageLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.averageLabel.setAlignment(QtCore.Qt.AlignRight)
         self.averageLabel.setWordWrap(False)
         self.rFiveLabel = QtWidgets.QLabel(self.tab_1)
         self.rFiveLabel.setGeometry(QtCore.QRect(530, 160, 101, 21))

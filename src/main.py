@@ -8,7 +8,7 @@ from copy import deepcopy
 import pickle
 
 class Window(QtWidgets.QMainWindow, Ui_MainWindow):
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -84,9 +84,14 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         )
 
     def update_rLabels(self, subject):
+        goal = subject.goal - 1 + Subject.threshold
         self.averageLabel.setText(
-            f'Средний балл: {subject.average}\nЦель: {subject.goal - 1 + Subject.threshold}'
+            f'Средний балл: {subject.average:.2f}\nЦель: {goal}'
             )
+        if subject.average >= goal:
+            self.averageLabel.setStyleSheet('color: green; font: 24px;')
+        else:
+            self.averageLabel.setStyleSheet('font: 24px;')
         remaining = subject.return_remaining()
         if remaining[0]:
             self.rFiveLabel.setText(f'Требуется: {remaining[0]}')
@@ -180,7 +185,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                     setup_list_2_contents(3)
                 self.fiveSpinBox.valueChanged.emit(self.fiveSpinBox.value())
                 self.fourSpinBox.valueChanged.emit(self.fourSpinBox.value())
-                self.threeSpinBox.valueChanged.emit(self.fourSpinBox.value())
+                self.threeSpinBox.valueChanged.emit(self.threeSpinBox.value())
                 if len(subject.marks) < 3:
                     QtWidgets.QListWidgetItem(self.listWidget_2).setText(
                         f'Оценок до аттестации: {3 - len(subject.marks)}'
@@ -201,6 +206,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         for subject in Subject.subjects:
             if subject.goal:
                 QtWidgets.QListWidgetItem(self.listWidget).setText(subject.name)
+        self.listWidget.setCurrentRow(0)
     
     def setup_totalList_1_contents(self, current_tab):
         if current_tab == 1:

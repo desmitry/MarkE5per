@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from entities import SCRIPT_PATH, SLASH
 
 
 class Ui_Settings():
@@ -6,6 +7,7 @@ class Ui_Settings():
         Settings.setObjectName("Settings")
         Settings.resize(325, 402)
         Settings.setWindowTitle("Настройки")
+        Settings.setWindowIcon(QtGui.QIcon(f'{SCRIPT_PATH}{SLASH}icon.png'))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)

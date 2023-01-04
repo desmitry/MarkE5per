@@ -4,16 +4,17 @@ from dataclasses import dataclass
 import datetime
 import pickle
 
-PLATFORM = platform
-if PLATFORM == 'win32':
+if platform == 'win32':
     SLASH = '\\'
-elif 'linux' in PLATFORM or PLATFORM == 'darwin':
+elif 'linux' in platform or platform == 'darwin':
     SLASH = '/'
+SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 @dataclass
 class Mark:
     value: int
     date: datetime.date = datetime.date(1, 1, 1)
+    is_backlog: bool = False
 
 @dataclass
 class Subject:
@@ -38,8 +39,7 @@ class Subject:
     @classmethod
     def save(cls):
         '''Save subjects in bytes.'''
-        import pickle
-        with open(f'{os.path.dirname(os.path.realpath(__file__))}{SLASH}subjects', 'wb') as f:
+        with open(f'{SCRIPT_PATH}{SLASH}subjects', 'wb') as f:
             subjects = Subject.subjects.copy()
             subjects.append(Subject.threshold)
             pickle.dump(subjects, f)
@@ -48,8 +48,7 @@ class Subject:
     @classmethod
     def load(cls):
         '''Load subjects from bytes.'''
-        import pickle
-        with open(f'{os.path.dirname(os.path.realpath(__file__))}{SLASH}subjects', 'rb') as f:
+        with open(f'{SCRIPT_PATH}{SLASH}subjects', 'rb') as f:
             Subject.subjects = pickle.load(f)
             Subject.threshold = Subject.subjects.pop()
 
@@ -60,7 +59,7 @@ class Subject:
         if not file:
             return
         from openpyxl import load_workbook
-        if PLATFORM == 'linux' or PLATFORM == 'darwin':
+        if platform == 'linux' or platform == 'darwin':
             MONTH_ROW = 12
         else:
             MONTH_ROW = 11
@@ -71,19 +70,22 @@ class Subject:
                 if sheet.cell(MONTH_ROW, i).value:
                     month = MONTHS[sheet.cell(MONTH_ROW, i).value]
                     break
-            marks.append(
-                Mark(
-                    value,
-                    datetime.date(
-                        datetime.date.today().year,
-                        # на винде B11. надо переделать так, чтобы не ссылаться так на вручную определенные номера строк
-                        month,
-                        # на винде 12
-                        sheet.cell(DATE_ROW, cell.column).value
+            day = sheet.cell(DATE_ROW, cell.column).value
+            if isinstance(value, int):
+                marks.append(
+                    Mark(
+                        value,
+                        datetime.date(datetime.date.today().year, month, day)
                     )
                 )
-            )
-
+            else:
+                marks.append(
+                    Mark(
+                        2,
+                        datetime.date(datetime.date.today().year, month, day),
+                        is_backlog=True
+                    )
+                )
         MONTHS = {value:key for key, value in
             enumerate(
                 ('Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль',
@@ -107,7 +109,7 @@ class Subject:
                     break
                 if not cell.value:
                     continue
-                elif isinstance(cell.value, int):
+                elif isinstance(cell.value, int) or cell.value == '.':
                     create_mark(cell, cell.value)
                 elif len(cell.value) > 1:
                     values = cell.value.split()
@@ -120,7 +122,7 @@ class Subject:
 
 
     def return_remaining(self):
-        """Return the amount of "5" (and "4") marks left for the average 
+        """Return the amount of "5" (and "4") marks left for the average
            of marks to satisfy the rounding threshold."""
         marks_sum = sum([mark.value for mark in self.marks])
         amount = len(self.marks)
@@ -140,9 +142,9 @@ class Subject:
         return fives_to_go, fours_to_go
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     answer = input('Загрузить данные из xlsx файла? (y/n): ')
-    if answer == 'n':    
+    if answer == 'n':
         Subject.load()
     else:
         Subject.load_excel('file.xlsx')

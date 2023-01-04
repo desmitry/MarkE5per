@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+from entities import SCRIPT_PATH, SLASH
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -13,6 +13,7 @@ class Ui_MainWindow(object):
         MainWindow.setMinimumSize(QtCore.QSize(652, 402))
         MainWindow.setMaximumSize(QtCore.QSize(652, 402))
         MainWindow.setWindowTitle('MarkE5per')
+        MainWindow.setWindowIcon(QtGui.QIcon(f'{SCRIPT_PATH}{SLASH}icon.png'))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setGeometry(QtCore.QRect(0, 0, 651, 371))
@@ -53,10 +54,10 @@ class Ui_MainWindow(object):
         self.rFourLabel.setGeometry(QtCore.QRect(530, 190, 101, 21))
         self.rFourLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.rFourLabel.setWordWrap(False)
-        #self.rThreeLabel = QtWidgets.QLabel(self.tab_1)
-        #self.rThreeLabel.setGeometry(QtCore.QRect(530, 220, 101, 21))
-        #self.rThreeLabel.setAlignment(QtCore.Qt.AlignCenter)
-        #self.rThreeLabel.setWordWrap(False)
+        # self.rThreeLabel = QtWidgets.QLabel(self.tab_1)
+        # self.rThreeLabel.setGeometry(QtCore.QRect(530, 220, 101, 21))
+        # self.rThreeLabel.setAlignment(QtCore.Qt.AlignCenter)
+        # self.rThreeLabel.setWordWrap(False)
         self.fiveSlider = QtWidgets.QSlider(self.tab_1)
         self.fiveSlider.setGeometry(QtCore.QRect(350, 160, 131, 21))
         self.fiveSlider.setFocusPolicy(QtCore.Qt.WheelFocus)

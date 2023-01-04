@@ -1,9 +1,8 @@
 from main_window import Ui_MainWindow
 from settings_window import Ui_Settings
 import sys
-import os
 from PyQt5 import QtWidgets
-from entities import PLATFORM, SLASH, Subject, Mark
+from entities import SLASH, SCRIPT_PATH, Subject, Mark
 from copy import deepcopy
 import pickle
 
@@ -19,7 +18,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             self.load_bytes()
         except FileNotFoundError:
             pass
-        
+
     def closeEvent(self, event):
         Subject.save()
 
@@ -51,7 +50,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             QtWidgets.QFileDialog.getOpenFileName(self, 'Открыть', filter='Excel files (*.xlsx)')[0]
         )
         try:
-            with open(f'{os.path.dirname(os.path.realpath(__file__))}{SLASH}subjects', 'rb') as f:
+            with open(f'{SCRIPT_PATH}{SLASH}subjects', 'rb') as f:
                 subjects_conf = pickle.load(f)
                 subjects_conf.pop(-1)
                 for subject_conf in subjects_conf:
@@ -107,8 +106,15 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             if item.checkState() == 2:
                 for mark in subject.marks:
                     if (
-                        int(item.text()[10]) == mark.value
-                        and mark.date.isoformat() == item.text()[15:25]
+                        item.text()[10] == str(mark.value)
+                        and mark.date.isoformat() == item.text()[15:]
+                    ):
+                        self.selected_subject.to_remove.append(mark)
+                        subject.marks.remove(mark)
+                        break
+                    elif (
+                        mark.is_backlog
+                        and mark.date.isoformat() == item.text()[16:]
                     ):
                         self.selected_subject.to_remove.append(mark)
                         subject.marks.remove(mark)
@@ -161,7 +167,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                     subject.to_remove.remove(mark)
                 else:
                     item.setCheckState(0)
-                item.setText(f'Исправить {value} за {mark.date}')
+                if not mark.is_backlog:
+                    item.setText(f'Исправить {value} за {mark.date}')
+                else:
+                    item.setText(f'Закрыть долг за {mark.date}')
                 self.listWidget_2.addItem(item)
         self.listWidget_2.clear()
         self.rFiveLabel.clear()
@@ -186,7 +195,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.fiveSpinBox.valueChanged.emit(self.fiveSpinBox.value())
                 self.fourSpinBox.valueChanged.emit(self.fourSpinBox.value())
                 self.threeSpinBox.valueChanged.emit(self.threeSpinBox.value())
-                if len(subject.marks) < 3:
+                if len([mark for mark in subject.marks if not mark.is_backlog]) < 3:
                     QtWidgets.QListWidgetItem(self.listWidget_2).setText(
                         f'Оценок до аттестации: {3 - len(subject.marks)}'
                     )
@@ -196,7 +205,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         '''Append relevant subjects to listWidget in tab_1.'''
         self.listWidget.clear()
         self.listWidget_2.clear()
-        self.totalList.clear()
         self.fiveSpinBox.setValue(0)
         self.fourSpinBox.setValue(0)
         self.threeSpinBox.setValue(0)
@@ -207,9 +215,11 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             if subject.goal:
                 QtWidgets.QListWidgetItem(self.listWidget).setText(subject.name)
         self.listWidget.setCurrentRow(0)
-    
+
     def setup_totalList_1_contents(self, current_tab):
         if current_tab == 1:
+            self.totalList.clear()
+            self.totalList_2.clear()
             for subject in Subject.subjects:
                 if subject.to_add or subject.to_remove:
                     QtWidgets.QListWidgetItem(self.totalList).setText(subject.name)
@@ -234,9 +244,14 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                         f'Заработай "три" в количестве: {threes}'
                     )
                 for mark in subject.to_remove:
-                    QtWidgets.QListWidgetItem(self.totalList_2).setText(
-                        f'Исправь {mark.value} за {mark.date}'
-                    )
+                    if not mark.is_backlog:
+                        QtWidgets.QListWidgetItem(self.totalList_2).setText(
+                            f'Исправь {mark.value} за {mark.date}'
+                        )
+                    else:
+                        QtWidgets.QListWidgetItem(self.totalList_2).setText(
+                            f'Закрой долг за {mark.date}'
+                        )
 
 class SettingsWindow(QtWidgets.QDialog, Ui_Settings):
     def __init__(self, parent=None):
@@ -244,13 +259,12 @@ class SettingsWindow(QtWidgets.QDialog, Ui_Settings):
         self.setupUi(self)
         self.load_tweaks()
         self.connectSignalsSlots()
-
     def connectSignalsSlots(self):
-        self.button_apply.clicked.connect(self.accept) 
+        self.button_apply.clicked.connect(self.accept)
         self.button_cancel.clicked.connect(self.reject)
 
     def load_tweaks(self):
-        '''Fill the column of tableWidget with subjects and goals.'''
+        '''Fill tableWidget with subjects and goals.'''
         self.tableWidget.setColumnCount(2)
         self.tableWidget.setRowCount(len(Subject.subjects))
         # first column
@@ -267,9 +281,9 @@ class SettingsWindow(QtWidgets.QDialog, Ui_Settings):
             else:
                 widget.setCurrentText(str(text))
             self.tableWidget.setCellWidget(row, 1, widget)
-    
+
     def accept(self):
-        '''Read the second column values and write them to subjects.'''
+        '''Read values from the second column and write them to subjects.'''
         for row, subject in enumerate(Subject.subjects):
             selected = self.tableWidget.cellWidget(row, 1).currentText()
             if selected.isdigit():

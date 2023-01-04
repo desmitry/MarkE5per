@@ -214,7 +214,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         for subject in Subject.subjects:
             if subject.goal:
                 QtWidgets.QListWidgetItem(self.listWidget).setText(subject.name)
-        self.listWidget.setCurrentRow(0)
 
     def setup_totalList_1_contents(self, current_tab):
         if current_tab == 1:
@@ -265,7 +264,6 @@ class SettingsWindow(QtWidgets.QDialog, Ui_Settings):
 
     def load_tweaks(self):
         '''Fill tableWidget with subjects and goals.'''
-        self.tableWidget.setColumnCount(2)
         self.tableWidget.setRowCount(len(Subject.subjects))
         # first column
         for row, subject in enumerate(Subject.subjects, 0):

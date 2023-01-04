@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.threeSpinBox = QtWidgets.QSpinBox(self.tab_1)
         self.threeSpinBox.setGeometry(QtCore.QRect(490, 220, 31, 21))
         self.tabWidget.addTab(self.tab_1, '')
-        
+
         self.tab_2 = QtWidgets.QWidget()
         self.totalList = QtWidgets.QListWidget(self.tab_2)
         self.totalList.setGeometry(QtCore.QRect(0, 0, 321, 331))

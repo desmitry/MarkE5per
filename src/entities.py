@@ -6,11 +6,11 @@ import pickle
 
 if platform == 'win32':
     SLASH = '\\'
-elif 'linux' in platform or platform == 'darwin':
+elif platform == 'linux' or platform == 'darwin':
     SLASH = '/'
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-@dataclass
+@dataclass(frozen=True)
 class Mark:
     value: int
     date: datetime.date = datetime.date(1, 1, 1)
@@ -72,14 +72,14 @@ class Subject:
                     break
             day = sheet.cell(DATE_ROW, cell.column).value
             if isinstance(value, int):
-                marks.append(
+                subject.marks.append(
                     Mark(
                         value,
                         datetime.date(datetime.date.today().year, month, day)
                     )
                 )
             else:
-                marks.append(
+                subject.marks.append(
                     Mark(
                         2,
                         datetime.date(datetime.date.today().year, month, day),
@@ -97,16 +97,20 @@ class Subject:
         sheet = load_workbook(filename=file).active
         Subject.subjects.clear()
         STOP_ROW = DATE_ROW
+        STOP_COLUMN = 2
         while True:
             STOP_ROW += 1
             if not sheet.cell(STOP_ROW, 1).value:
                 STOP_ROW -= 1
                 break
-        for row in sheet.iter_rows(DATE_ROW + 1, STOP_ROW, 1):
-            marks = []
+        while True:
+            STOP_COLUMN += 1
+            if sheet.cell(MONTH_ROW, STOP_COLUMN).value == 'Средняя оценка':
+                STOP_COLUMN -= 1
+                break
+        for row in sheet.iter_rows(DATE_ROW + 1, STOP_ROW, 1, STOP_COLUMN):
+            subject = Subject(row[0].value, [], 0, 5, [], [])
             for cell in row[1:]:
-                if sheet.cell(MONTH_ROW, cell.column).value == 'Средняя оценка':
-                    break
                 if not cell.value:
                     continue
                 elif isinstance(cell.value, int) or cell.value == '.':
@@ -116,7 +120,6 @@ class Subject:
                     for value in values:
                         if value.isdigit():
                             create_mark(cell, int(value))
-            subject = Subject(row[0].value, marks, 0, 5, [], [])
             subject.calculate_average()
             Subject.subjects.append(subject)
 
@@ -124,30 +127,28 @@ class Subject:
     def return_remaining(self):
         """Return the amount of "5" (and "4") marks left for the average
            of marks to satisfy the rounding threshold."""
-        marks_sum = sum([mark.value for mark in self.marks])
-        amount = len(self.marks)
-        average = self.average
-        fives_to_go = 0
-        fours_to_go = 0
-        while average < self.goal - 1 + Subject.threshold:
-            fives_to_go += 1
-            marks_sum += 5
-            amount += 1
-            average = (marks_sum) / (amount)
-        average = self.average
-        if self.goal != 5:
+        def calculate_to_go(value):
+            marks_sum = sum([mark.value for mark in self.marks])
+            amount = len(self.marks)
+            average = self.average
+            to_go = 0
             while average < self.goal - 1 + Subject.threshold:
-                fours_to_go += 1
-                average = (marks_sum + 4) / (amount + 1)
-        return fives_to_go, fours_to_go
+                to_go += 1
+                marks_sum += value
+                amount += 1
+                average = (marks_sum) / (amount)
+            return to_go
+        if self.goal == 5:
+            return calculate_to_go(5), 0
+        return calculate_to_go(5), calculate_to_go(4)
 
 
 if __name__ == '__main__':
-    answer = input('Загрузить данные из xlsx файла? (y/n): ')
+    answer = input('Загрузить данные из .xlsx файла? (Y/n) ')
     if answer == 'n':
         Subject.load()
     else:
-        Subject.load_excel('file.xlsx')
+        Subject.load_excel(str(input('Введите путь к файлу:\n')))
         Subject.save()
     while True:
         eval(input('>>>'))

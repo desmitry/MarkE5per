@@ -195,9 +195,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.fiveSpinBox.valueChanged.emit(self.fiveSpinBox.value())
                 self.fourSpinBox.valueChanged.emit(self.fourSpinBox.value())
                 self.threeSpinBox.valueChanged.emit(self.threeSpinBox.value())
-                if len([mark for mark in subject.marks if not mark.is_backlog]) < 3:
+                real_marks = [mark for mark in subject.marks if not mark.is_backlog]
+                if len(real_marks) < 3:
                     QtWidgets.QListWidgetItem(self.listWidget_2).setText(
-                        f'Оценок до аттестации: {3 - len(subject.marks)}'
+                        f'Оценок до аттестации: {3 - len(real_marks)}'
                     )
                 break
 

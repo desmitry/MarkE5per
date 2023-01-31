@@ -13,6 +13,23 @@
 ## Как эту информацию использовать?
 1. На её основе определи свои дальнейшие действия и отметь их в приложении;
 2. Из вкладки "Итоги" все выбранные действия перенеси в собственный список домашних заданий (desmitry любит Notion).
+## Установка
+1. Установи [Python](https://www.python.org/downloads/) не ниже 3.8;
+2. Установи [Git](https://git-scm.com/download/win);
+3. В командной строке выполни:
+```
+cd <путь к директории установки приложения>
+git clone https://github.com/desmitry/MarkE5per.git
+cd MarkE5per
+pip install -r requirements.txt
+```
+Приложение работает на Windows, Linux и Mac OS X. Пользуешься Mac OS X — напиши разработчику.
+## Обновление
+1. В командной строке выполни:
+```
+cd <путь к директории приложения>
+git pull
+```
 ## Как загрузить отметки?
 1. Скачай .xls файл на странице сформированного отчета об успеваемости и посещаемости;
 2. Открой файл в Microsoft Excel или LibreOffice Calc и сохрани его как .xlsx файл (в Microsoft Excel сделай все отметки и даты числовым типом);
@@ -21,4 +38,5 @@
 
 <img src="/screenshot_1.png"><img src="/screenshot_3.png"><img src="/screenshot_2.png">
 
+Получаешь крутые результаты от работы с приложением — [купи](https://t.me/desmitry) его.
 Создано [@desmitry](https://t.me/desmitry).

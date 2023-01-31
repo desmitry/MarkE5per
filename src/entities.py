@@ -58,12 +58,25 @@ class Subject:
         '''Load subjects from xlsx file.'''
         if not file:
             return
-        from openpyxl import load_workbook
         if platform == 'linux' or platform == 'darwin':
             MONTH_ROW = 12
         else:
             MONTH_ROW = 11
         DATE_ROW = MONTH_ROW + 1
+
+        def sheet_from_xls(file):
+            '''Return an openpyxl sheet with the contents of the specified .xls file.'''
+            import xlrd
+            from openpyxl.workbook import Workbook
+            sheet1 = xlrd.open_workbook(file).sheet_by_index(0)
+            nrows = sheet1.nrows
+            ncols = sheet1.ncols
+            sheet2 = Workbook.active
+            for row in range(1, nrows):
+                for column in range(1, ncols):
+                    sheet2.cell(row=row, column=col).value = sheet2.cell_value(row, col)
+            return sheet2
+
         def create_mark(cell, value):
             month = 0
             for i in range(cell.column, 0, -1):
@@ -94,7 +107,11 @@ class Subject:
                 start=1
             )
         }
-        sheet = load_workbook(filename=file).active
+        if file[-1] == 's':
+            sheet = sheet_from_xls(file)
+        else:
+            from openpyxl import load_workbook
+            sheet = load_workbook(filename=file).active
         Subject.subjects.clear()
         STOP_ROW = DATE_ROW
         STOP_COLUMN = 2
